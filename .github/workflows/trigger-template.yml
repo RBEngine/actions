@@ -1,0 +1,49 @@
+name: Reusable Trigger Template
+
+on:
+  workflow_call:
+    inputs:
+      target_repos:
+        description: 'JSON array of target repositories'
+        type: string
+        required: true
+    secrets:
+      PAT_TOKEN:
+        required: true
+
+jobs:
+  dispatch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check Environment
+        id: check_env
+        run: |
+          if [ "${{ github.ref }}" == "refs/heads/master" ]; then
+            echo "env_name=prod" >> $GITHUB_OUTPUT
+          else
+            echo "env_name=test" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Trigger Dependent Places
+        env:
+          REPOS: ${{ inputs.target_repos }}
+          TOKEN: ${{ secrets.PAT_TOKEN }}
+          ENV_NAME: ${{ steps.check_env.outputs.env_name }}
+          BRANCH: ${{ github.ref_name }}
+          REPO_NAME: ${{ github.event.repository.name }}
+          ORG: ${{ github.repository_owner }}
+        run: |
+          echo $REPOS | jq -r '.[]' | while read repo; do
+            echo "Triggering $ORG/$repo..."
+            curl -s -X POST "https://api.github.com/repos/$ORG/$repo/dispatches" \
+            -H 'Accept: application/vnd.github.v3+json' \
+            -H "Authorization: Bearer $TOKEN" \
+            -d "{
+                  \"event_type\": \"update_library\",
+                  \"client_payload\": {
+                    \"environment\": \"$ENV_NAME\",
+                    \"branch\": \"$BRANCH\",
+                    \"repo_name\": \"$REPO_NAME\"
+                  }
+                }"
+          done
