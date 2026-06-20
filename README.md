@@ -1,6 +1,6 @@
 # CI/CD Reusable Workflows
 
-This repository contains GitHub Actions Reusable Workflows for building and deploying to Roblox, as well as dispatching events to trigger updates in dependent repositories.
+This repository contains GitHub Actions Reusable Workflows for building and deploying to Roblox.
 
 ---
 
@@ -41,31 +41,3 @@ jobs:
 ```
 
 *Note: Ensure you have `ROBLOX_API_KEY`, `PROD_UNIVERSE_ID`, `PROD_PLACE_ID`, `TEST_UNIVERSE_ID`, and `TEST_PLACE_ID` configured in your Organization or Repository Secrets.*
-
----
-
-## 2. Trigger Template (`trigger-template.yml`)
-
-This workflow is used by shared library packages (e.g., Economy, Pet systems) to dispatch update signals to all dependent game places.  
-It parses a JSON array of repositories and triggers them to pull the latest library version.
-
-**Example usage in your Library repository (e.g., `RBEconomy/.github/workflows/deploy.yml`):**
-
-```yaml
-name: Trigger Dependent Places
-
-on:
-  push:
-    branches:
-      - '**'
-
-jobs:
-  trigger:
-    uses: RBEngine/actions/.github/workflows/trigger-template.yml@main
-    with:
-      # Specify the target repositories as a JSON array
-      target_repos: '["MyGame-arena", "MyGame-tournament", "MyGame-lobby"]'
-    secrets:
-      # Requires a Personal Access Token (PAT) with access to trigger the target repositories
-      PAT_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
-```
