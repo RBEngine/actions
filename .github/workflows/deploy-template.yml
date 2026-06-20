@@ -16,6 +16,19 @@ on:
         description: 'Target environment (prod or test)'
         type: string
         required: false
+    secrets:
+      SUBMODULE_TOKEN:
+        required: false
+      PROD_UNIVERSE_ID:
+        required: false
+      PROD_PLACE_ID:
+        required: false
+      TEST_UNIVERSE_ID:
+        required: false
+      TEST_PLACE_ID:
+        required: false
+      ROBLOX_API_KEY:
+        required: false
 
 jobs:
   build-and-publish:
@@ -48,22 +61,22 @@ jobs:
           elif [ "${{ inputs.is_dispatch }}" == "true" ] && [ "${{ inputs.environment_target }}" == "prod" ]; then
             IS_PROD="true"
           fi
-          echo "is_prod=$IS_PROD" >> $GITHUB_OUTPUT
+          echo "is_prod=$IS_PROD" >> "$GITHUB_OUTPUT"
 
       - name: Publish to Official (PROD)
         if: steps.target.outputs.is_prod == 'true'
         run: |
           echo "Pushing to Official Place"
-          curl --location --request POST 'https://apis.roblox.com/universes/v1/${{ secrets.PROD_UNIVERSE_ID }}/places/${{ secrets.PROD_PLACE_ID }}/versions?versionType=Published' \
-          --header 'x-api-key: ${{ secrets.ROBLOX_API_KEY }}' \
-          --header 'Content-Type: application/octet-stream' \
-          --data-binary '@place.rbxl'
+          curl --fail --location --request POST "https://apis.roblox.com/universes/v1/${{ secrets.PROD_UNIVERSE_ID }}/places/${{ secrets.PROD_PLACE_ID }}/versions?versionType=Published" \
+            --header "x-api-key: ${{ secrets.ROBLOX_API_KEY }}" \
+            --header "Content-Type: application/octet-stream" \
+            --data-binary "@place.rbxl"
 
       - name: Publish to Test Place (TEST)
         if: steps.target.outputs.is_prod == 'false'
         run: |
           echo "Pushing to Test Place"
-          curl --location --request POST 'https://apis.roblox.com/universes/v1/${{ secrets.TEST_UNIVERSE_ID }}/places/${{ secrets.TEST_PLACE_ID }}/versions?versionType=Published' \
-          --header 'x-api-key: ${{ secrets.ROBLOX_API_KEY }}' \
-          --header 'Content-Type: application/octet-stream' \
-          --data-binary '@place.rbxl'
+          curl --fail --location --request POST "https://apis.roblox.com/universes/v1/${{ secrets.TEST_UNIVERSE_ID }}/places/${{ secrets.TEST_PLACE_ID }}/versions?versionType=Published" \
+            --header "x-api-key: ${{ secrets.ROBLOX_API_KEY }}" \
+            --header "Content-Type: application/octet-stream" \
+            --data-binary "@place.rbxl"
